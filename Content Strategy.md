@@ -1,10 +1,4 @@
-<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" style="height:64px;margin-right:32px"/>
-
-# 3. Контент: сам будешь создавать курсы или планируешь привлекать экспертов?
-
-хочу все на базе ии построить (без видео будет)
-
-Отлично! AI-generated контент — это мощный подход, который позволит масштабироваться быстро. Давай детально распишу как построить всю контентную часть на AI:
+AI-generated контент — это мощный подход, который позволит масштабироваться быстро. Давай детально распишу как построить всю контентную часть на AI:
 
 ***
 
@@ -584,24 +578,4 @@ user_content_cache (
 
 ***
 
-## Вопросы к тебе:
-
-1. **TTS**: какой бюджет на аудио? ElevenLabs дороже но лучше качество, или Google TTS дешевле?
-2. **Content validation**: кто будет проверять AI-generated контент перед публикацией? Сам или наймёшь экспертов?
-3. **Language**: только русский, только английский, или оба? (влияет на TTS и AI prompts)
-4. **Update frequency**: как часто планируешь обновлять контент с новыми AI трендами?
-
-Готов детализировать любую часть! Могу также дать конкретные промпты для генерации первых уроков.
-
-<div align="center">⁂</div>
-
-[^1]: https://www.disco.co/blog/ai-tools-for-gamified-learning-2025
-
-[^2]: https://www.connectingeducation.co.uk/blog/guest-post-whats-the-best-ai-platform-for-adaptive-teaching-a-comparative-guide
-
-[^3]: https://www.quizcat.ai/blog/best-free-apis-for-education-app-integration
-
-[^4]: https://www.coursera.org/articles/adaptive-learning-platforms
-
-[^5]: https://elearningindustry.com/understanding-adaptive-learning-how-ai-is-revolutionizing-personalized-education
 

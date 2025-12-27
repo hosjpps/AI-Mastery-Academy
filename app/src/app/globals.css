@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -117,9 +118,46 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom prose styles for dark mode */
+.prose-invert h2 {
+  @apply text-white font-bold text-xl mt-6 mb-3;
+}
+
+.prose-invert h3 {
+  @apply text-white font-semibold text-lg mt-5 mb-2;
+}
+
+.prose-invert p {
+  @apply text-zinc-300 mb-4 leading-relaxed;
+}
+
+.prose-invert ul {
+  @apply list-disc list-inside space-y-2 mb-4 text-zinc-300;
+}
+
+.prose-invert ol {
+  @apply list-decimal list-inside space-y-2 mb-4 text-zinc-300;
+}
+
+.prose-invert li {
+  @apply text-zinc-300;
+}
+
+.prose-invert strong {
+  @apply text-white font-semibold;
+}
+
+.prose-invert pre {
+  @apply bg-zinc-800 rounded-lg p-4 overflow-x-auto mb-4;
+}
+
+.prose-invert code {
+  @apply bg-zinc-800 text-violet-400 px-1.5 py-0.5 rounded text-sm;
 }

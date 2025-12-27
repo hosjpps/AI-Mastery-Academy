@@ -8,10 +8,126 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Planning Phase
-- Initial project conception
-- Architecture design
-- Tech stack selection
+### In Progress
+- Google OAuth setup (needs Google Cloud Console)
+
+---
+
+## [0.1.0-beta] - 2025-12-28
+
+### Added
+- **Profile Page**
+  - User stats display (XP, quests completed, streak)
+  - Level progress visualization
+  - Badges showcase
+  - Account information
+
+- **Settings Page**
+  - Profile editing (display name)
+  - Learning preferences (daily goal, learning style, career track)
+  - Save functionality with toast notifications
+
+- **Leaderboard Page**
+  - Top 3 podium design
+  - Full rankings list with user highlight
+  - XP and streak display
+
+- **Quest Content**
+  - Added theory and practice content to 10 Foundation quests
+  - RICE Framework for prompt structure
+  - 5W1H Method for context
+  - Output formatting techniques
+  - Iterative prompting strategies
+  - Total: 925 XP available in Foundation track
+
+- **AI Evaluation API**
+  - `/api/evaluate` endpoint for quest submissions
+  - OpenRouter integration (GPT-4o-mini)
+  - Structured evaluation with score (0-100) and feedback
+  - Fallback mock evaluation when API unavailable
+
+### Changed
+- Quest submission now uses real AI evaluation instead of mock
+- Updated dashboard layout with AI Coach widget
+- Removed duplicate AI Coach button from sidebar
+
+### Technical
+- 16 routes total (5 API, 11 pages)
+- API routes: `/api/chat`, `/api/evaluate`
+- All TypeScript strict mode compliant
+
+---
+
+## [0.1.0-alpha] - 2025-12-27
+
+### Added
+- **Authentication System**
+  - Login page with email/password
+  - Registration page with username
+  - Forgot password flow
+  - OAuth callback handler
+  - Protected routes with server-side auth
+  - Supabase auth integration
+
+- **Onboarding Flow**
+  - Multi-step wizard (5 steps)
+  - Learning style selection (visual, auditory, kinesthetic)
+  - Career track selection (freelancer, entrepreneur, career, hobbyist)
+  - Daily goal setting (5-60 minutes)
+  - Profile update on completion
+
+- **Dashboard**
+  - Stats cards (Total XP, Level, Current Streak, Longest Streak)
+  - Level progress bar with XP calculation
+  - Continue learning section with quest cards
+  - Learning tracks overview with progress
+
+- **Quest System**
+  - Quest Map page with expandable tracks
+  - Quest path visualization with status indicators
+  - Quest detail page with theory/practice tabs
+  - Quest progress tracking (start, complete)
+  - XP earning on quest completion
+  - Navigation between quests
+
+- **AI Coach**
+  - Floating chat widget (bottom-right corner)
+  - OpenRouter API integration (GPT-4o-mini)
+  - Chat history saved to database
+  - Context-aware system prompt
+  - Quick suggestion buttons
+  - Mock responses for development (no API key)
+
+- **Gamification**
+  - XP system with level thresholds
+  - Level calculation (1-10 based on XP)
+  - Streak tracking in profiles
+  - User progress tracking per quest
+
+- **UI Components (shadcn/ui)**
+  - Button, Card, Input, Label
+  - Avatar, Badge, Progress
+  - Dialog, DropdownMenu
+  - Textarea, Toast/Sonner
+
+- **Layout**
+  - Dashboard sidebar (desktop)
+  - Mobile bottom navigation
+  - Dashboard header with user menu
+  - Responsive design
+
+- **Database**
+  - Complete schema migration
+  - RLS policies enabled
+  - Seed data for tracks, subtracks, quests, badges
+  - TypeScript types generated
+
+### Technical
+- Next.js 15 with App Router
+- Supabase client (server + client)
+- Zustand store for user state
+- Server Actions for auth
+- API route for chat
 
 ---
 

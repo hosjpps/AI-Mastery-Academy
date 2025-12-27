@@ -1,36 +1,194 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Mastery Academy
+
+> Gamified learning platform for mastering AI skills. Think Duolingo for AI.
+
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)
+![Tailwind](https://img.shields.io/badge/Tailwind-4-cyan)
+
+## Overview
+
+AI Mastery Academy is an EdTech platform that teaches practical AI skills through gamification. Users progress through quests, earn XP, level up, and get personalized guidance from an AI Coach.
+
+### Key Features
+
+- **Quest-Based Learning** - Structured lessons with theory, practice, and AI evaluation
+- **Gamification** - XP, levels, streaks, badges, and leaderboards
+- **AI Coach** - Personal assistant for hints, guidance, and support
+- **AI Evaluation** - Real-time feedback on quest submissions via GPT-4o-mini
+- **Progress Tracking** - Visual quest map, stats dashboard, and achievements
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript (strict mode) |
+| Database | Supabase (PostgreSQL + RLS) |
+| Auth | Supabase Auth (Email + Google OAuth) |
+| AI | OpenRouter (GPT-4o-mini) |
+| Styling | Tailwind CSS 4 + shadcn/ui |
+| State | Zustand |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+
+- npm or pnpm
+- Supabase project
+- OpenRouter API key
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/ai-mastery-academy.git
+cd ai-mastery-academy/app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit `.env.local` with your credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+OPENROUTER_API_KEY=your_openrouter_key
+```
 
-## Learn More
+4. Run the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. Open [http://localhost:3000](http://localhost:3000)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (auth)/             # Auth pages (login, register)
+│   │   ├── (dashboard)/        # Protected pages
+│   │   ├── api/                # API routes
+│   │   └── globals.css         # Global styles
+│   ├── components/
+│   │   ├── ui/                 # shadcn/ui components
+│   │   ├── dashboard/          # Dashboard components
+│   │   └── onboarding/         # Onboarding components
+│   ├── lib/                    # Utilities
+│   │   ├── supabase/           # Supabase clients
+│   │   └── utils.ts            # Helper functions
+│   ├── stores/                 # Zustand stores
+│   └── types/                  # TypeScript types
+├── public/                     # Static assets
+└── supabase/                   # Database migrations
+```
 
-## Deploy on Vercel
+## Routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/login` | User login |
+| `/register` | User registration |
+| `/onboarding` | New user onboarding |
+| `/dashboard` | Main dashboard |
+| `/quest-map` | Quest visualization |
+| `/quest/[slug]` | Quest detail page |
+| `/profile` | User profile |
+| `/settings` | User settings |
+| `/leaderboard` | Rankings |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/chat` | POST | AI Coach chat |
+| `/api/evaluate` | POST | Quest submission evaluation |
+
+## Database Schema
+
+Key tables:
+- `profiles` - User profiles with XP, level, streak
+- `tracks` - Learning tracks (Content Creation, etc.)
+- `subtracks` - Track subdivisions (Foundation, etc.)
+- `quests` - Individual lessons
+- `user_progress` - Quest completion tracking
+- `chat_history` - AI Coach conversations
+- `badges` - Achievement badges
+- `user_badges` - Earned badges
+
+## Development
+
+### Build for Production
+```bash
+npm run build
+```
+
+### Type Checking
+```bash
+npm run typecheck
+```
+
+### Linting
+```bash
+npm run lint
+```
+
+### Generate Supabase Types
+```bash
+npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/database.types.ts
+```
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push to GitHub
+2. Connect repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy
+
+Auto-deploys on every push to main branch.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](../docs/ARCHITECTURE.md) | Technical architecture |
+| [PROJECT-STATUS.md](../docs/PROJECT-STATUS.md) | Development progress |
+| [CHANGELOG.md](../docs/CHANGELOG.md) | Version history |
+| [AI-PROMPTS.md](../docs/AI-PROMPTS.md) | AI system prompts |
+
+## Current Status
+
+**Phase 1 MVP: Complete (100%)**
+
+- Authentication (Email + Google OAuth)
+- Onboarding flow
+- Quest system with AI evaluation
+- AI Coach with chat history
+- Gamification (XP, Levels, Streaks)
+- Dashboard, Profile, Settings, Leaderboard
+
+See [PROJECT-STATUS.md](../docs/PROJECT-STATUS.md) for detailed progress.
+
+## License
+
+MIT
+
+## Author
+
+@hosjpps

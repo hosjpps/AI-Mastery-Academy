@@ -29,7 +29,7 @@ export const useUserStore = create<UserState>((set) => ({
   updateXP: (xp) =>
     set((state) => ({
       profile: state.profile
-        ? { ...state.profile, xp: state.profile.xp + xp }
+        ? { ...state.profile, xp: (state.profile.xp || 0) + xp }
         : null,
     })),
 
@@ -38,10 +38,10 @@ export const useUserStore = create<UserState>((set) => ({
       profile: state.profile
         ? {
             ...state.profile,
-            current_streak: state.profile.current_streak + 1,
+            current_streak: (state.profile.current_streak || 0) + 1,
             longest_streak: Math.max(
-              state.profile.longest_streak,
-              state.profile.current_streak + 1
+              state.profile.longest_streak || 0,
+              (state.profile.current_streak || 0) + 1
             ),
           }
         : null,
