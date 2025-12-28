@@ -2,6 +2,8 @@
 
 > Gamified learning platform for AI skills - Think Duolingo for AI learning
 
+Deploy: https://ai-mastery-academy-five.vercel.app/
+
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)
