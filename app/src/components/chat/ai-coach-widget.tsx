@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { MessageCircle, X, Send, Loader2, Sparkles, Bot, User } from 'lucide-react'
+import { MessageCircle, X, Send, Loader2, Sparkles, Bot, User, Lightbulb, BookOpen, Code2, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Message = {
@@ -12,12 +12,24 @@ type Message = {
   content: string
 }
 
-export function AICoachWidget() {
+type QuestContext = {
+  slug: string
+  title: string
+  description?: string
+}
+
+type AICoachWidgetProps = {
+  questContext?: QuestContext
+}
+
+export function AICoachWidget({ questContext }: AICoachWidgetProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [sessions, setSessions] = useState<{ id: string; created_at: string; preview: string }[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -28,21 +40,24 @@ export function AICoachWidget() {
     scrollToBottom()
   }, [messages])
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return
+  const sendMessage = useCallback(async (customMessage?: string, actionType?: string) => {
+    const messageText = customMessage || input.trim()
+    if (!messageText || loading) return
 
-    const userMessage = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    if (!customMessage) setInput('')
+    setMessages(prev => [...prev, { role: 'user', content: messageText }])
     setLoading(true)
+    setShowHistory(false)
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userMessage,
-          sessionId
+          message: messageText,
+          sessionId,
+          questSlug: questContext?.slug,
+          actionType
         })
       })
 
@@ -65,6 +80,57 @@ export function AICoachWidget() {
     } finally {
       setLoading(false)
     }
+  }, [input, loading, sessionId, questContext?.slug])
+
+  // Quick action handlers
+  const handleQuickAction = (action: 'hint' | 'explain' | 'example') => {
+    const messages: Record<string, string> = {
+      hint: questContext
+        ? `Give me a hint for the "${questContext.title}" quest`
+        : "Can you give me a hint?",
+      explain: questContext
+        ? `Explain the concepts in "${questContext.title}"`
+        : "Can you explain this concept?",
+      example: questContext
+        ? `Show me an example related to "${questContext.title}"`
+        : "Can you show me an example?"
+    }
+    sendMessage(messages[action], action)
+  }
+
+  // Load chat sessions for history
+  const loadSessions = async () => {
+    try {
+      const response = await fetch('/api/chat/sessions')
+      if (response.ok) {
+        const data = await response.json()
+        setSessions(data.sessions || [])
+      }
+    } catch {
+      console.error('Failed to load sessions')
+    }
+  }
+
+  // Load a previous session
+  const loadSession = async (id: string) => {
+    try {
+      const response = await fetch(`/api/chat/sessions/${id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setMessages(data.messages || [])
+        setSessionId(id)
+        setShowHistory(false)
+      }
+    } catch {
+      console.error('Failed to load session')
+    }
+  }
+
+  // Start new chat
+  const startNewChat = () => {
+    setMessages([])
+    setSessionId(null)
+    setShowHistory(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -96,42 +162,135 @@ export function AICoachWidget() {
             </div>
             <div>
               <CardTitle className="text-white text-base">AI Coach</CardTitle>
-              <p className="text-xs text-zinc-500">Here to help you learn</p>
+              <p className="text-xs text-zinc-500">
+                {questContext ? `Helping with: ${questContext.title}` : 'Here to help you learn'}
+              </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsOpen(false)}
-            className="text-zinc-400 hover:text-white"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setShowHistory(!showHistory)
+                if (!showHistory) loadSessions()
+              }}
+              className="text-zinc-400 hover:text-white h-8 w-8"
+              title="Chat history"
+            >
+              <History className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(false)}
+              className="text-zinc-400 hover:text-white h-8 w-8"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
 
       {/* Messages */}
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
+        {/* History Panel */}
+        {showHistory && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-white text-sm">Chat History</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={startNewChat}
+                className="text-violet-400 hover:text-violet-300 text-xs h-7"
+              >
+                New Chat
+              </Button>
+            </div>
+            {sessions.length === 0 ? (
+              <p className="text-sm text-zinc-500 text-center py-4">No previous chats</p>
+            ) : (
+              <div className="space-y-2">
+                {sessions.map((session) => (
+                  <button
+                    key={session.id}
+                    onClick={() => loadSession(session.id)}
+                    className={cn(
+                      "w-full text-left p-3 rounded-lg transition-colors",
+                      session.id === sessionId
+                        ? "bg-violet-500/20 border border-violet-500/30"
+                        : "bg-zinc-800/50 hover:bg-zinc-800"
+                    )}
+                  >
+                    <p className="text-sm text-zinc-300 truncate">{session.preview}</p>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {new Date(session.created_at).toLocaleDateString()}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Empty state with suggestions */}
+        {messages.length === 0 && !showHistory && (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full bg-violet-500/10 flex items-center justify-center mb-4">
               <Bot className="w-8 h-8 text-violet-400" />
             </div>
             <h3 className="font-medium text-white mb-2">How can I help you today?</h3>
             <p className="text-sm text-zinc-400 max-w-[250px]">
-              Ask me anything about AI, prompts, or your current quest!
+              {questContext
+                ? `I can help you with "${questContext.title}". Ask me anything!`
+                : 'Ask me anything about AI, prompts, or your learning journey!'}
             </p>
+
+            {/* Quick Actions for Quest Context */}
+            {questContext && (
+              <div className="flex gap-2 mt-4 w-full">
+                <button
+                  onClick={() => handleQuickAction('hint')}
+                  className="flex-1 flex items-center justify-center gap-2 text-sm p-2.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors border border-amber-500/20"
+                >
+                  <Lightbulb className="w-4 h-4" />
+                  Hint
+                </button>
+                <button
+                  onClick={() => handleQuickAction('explain')}
+                  className="flex-1 flex items-center justify-center gap-2 text-sm p-2.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors border border-blue-500/20"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Explain
+                </button>
+                <button
+                  onClick={() => handleQuickAction('example')}
+                  className="flex-1 flex items-center justify-center gap-2 text-sm p-2.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors border border-green-500/20"
+                >
+                  <Code2 className="w-4 h-4" />
+                  Example
+                </button>
+              </div>
+            )}
+
+            {/* Dynamic Suggestions */}
             <div className="grid gap-2 mt-4 w-full">
-              {[
-                "What is prompt engineering?",
-                "How do I improve my prompts?",
-                "Explain AI models"
-              ].map((suggestion) => (
+              {(questContext
+                ? [
+                    `What should I focus on in "${questContext.title}"?`,
+                    "What are the key concepts here?",
+                    "How do I approach this practice task?"
+                  ]
+                : [
+                    "What is prompt engineering?",
+                    "How do I improve my prompts?",
+                    "What should I learn first?"
+                  ]
+              ).map((suggestion) => (
                 <button
                   key={suggestion}
-                  onClick={() => {
-                    setInput(suggestion)
-                  }}
+                  onClick={() => sendMessage(suggestion)}
                   className="text-left text-sm p-3 rounded-lg bg-zinc-800/50 text-zinc-300 hover:bg-zinc-800 transition-colors"
                 >
                   {suggestion}
@@ -141,7 +300,7 @@ export function AICoachWidget() {
           </div>
         )}
 
-        {messages.map((message, index) => (
+        {!showHistory && messages.map((message, index) => (
           <div
             key={index}
             className={cn(
@@ -174,7 +333,7 @@ export function AICoachWidget() {
           </div>
         ))}
 
-        {loading && (
+        {!showHistory && loading && (
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0">
               <Bot className="w-4 h-4 text-violet-400" />
@@ -193,18 +352,48 @@ export function AICoachWidget() {
       </CardContent>
 
       {/* Input */}
-      <div className="p-4 border-t border-zinc-800 shrink-0">
+      <div className="p-4 border-t border-zinc-800 shrink-0 space-y-3">
+        {/* Quick Actions (when in conversation with quest context) */}
+        {questContext && messages.length > 0 && !showHistory && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleQuickAction('hint')}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors border border-amber-500/20 disabled:opacity-50"
+            >
+              <Lightbulb className="w-3 h-3" />
+              Hint
+            </button>
+            <button
+              onClick={() => handleQuickAction('explain')}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors border border-blue-500/20 disabled:opacity-50"
+            >
+              <BookOpen className="w-3 h-3" />
+              Explain
+            </button>
+            <button
+              onClick={() => handleQuickAction('example')}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors border border-green-500/20 disabled:opacity-50"
+            >
+              <Code2 className="w-3 h-3" />
+              Example
+            </button>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask me anything..."
+            placeholder={questContext ? `Ask about "${questContext.title}"...` : "Ask me anything..."}
             className="min-h-[44px] max-h-[120px] bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 resize-none"
             rows={1}
           />
           <Button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
             className="bg-violet-600 hover:bg-violet-500 shrink-0"
           >

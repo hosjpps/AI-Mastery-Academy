@@ -13,6 +13,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.2.1] - 2025-12-28
+
+### Added
+- **Advanced AI Coach**
+  - Quest context awareness - AI knows current quest content
+  - User profile personalization (learning style, career track, level)
+  - Quick action buttons: Hint, Explain, Example
+  - Dynamic suggested prompts based on context
+  - Chat session history with session switching
+  - Learning style-adapted responses (visual/auditory/kinesthetic)
+
+- **Chat Sessions API**
+  - `/api/chat/sessions` - List user's chat sessions
+  - `/api/chat/sessions/[id]` - Load specific session messages
+
+### Changed
+- AI Coach widget now shows quest title when on quest page
+- System prompt includes full user context and quest content
+- Suggestions are dynamic based on whether user is on a quest
+
+### Technical
+- New `stores/questStore.ts` for global quest context
+- New `components/chat/ai-coach-provider.tsx` wrapper
+- 18 routes total (6 API, 12 pages)
+
+---
+
 ## [0.2.0] - 2025-12-28
 
 ### Added

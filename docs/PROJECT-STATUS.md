@@ -17,7 +17,7 @@
 | Onboarding | ✅ Complete | Learning style, career track, daily goal |
 | Dashboard | ✅ Complete | Stats, level progress, quests preview |
 | Quest System | ✅ Complete | Quest Map + Quest detail page |
-| AI Coach | ✅ Complete | Floating chat widget with OpenRouter integration |
+| AI Coach | ✅ Enhanced | Context-aware with quick actions and chat history |
 | Gamification | ✅ Enhanced | XP, Levels, Streaks, Badges, Daily Challenge |
 | Profile | ✅ Complete | View stats, badges, account info |
 | Settings | ✅ Complete | Update preferences |
@@ -94,8 +94,14 @@
   - [x] API endpoint for daily quest
   - [x] Dashboard card component
   - [x] Bonus XP for daily completion
+- [x] Advanced AI Coach
+  - [x] Quest context awareness
+  - [x] User profile personalization (learning style, career track)
+  - [x] Quick action buttons (Hint, Explain, Example)
+  - [x] Dynamic suggested prompts
+  - [x] Chat session history
+  - [x] Learning style-adapted responses
 - [ ] Content Creation Track (25 quests)
-- [ ] Advanced AI Coach
 - [ ] Public profiles
 - [ ] Performance optimization
 - [ ] TTS for audio learners
@@ -134,6 +140,8 @@
 | `/settings` | Dynamic | User settings |
 | `/leaderboard` | Dynamic | User rankings |
 | `/api/chat` | API | AI Coach chat endpoint |
+| `/api/chat/sessions` | API | List user chat sessions |
+| `/api/chat/sessions/[id]` | API | Load specific chat session |
 | `/api/evaluate` | API | Quest submission AI evaluation |
 | `/api/daily-challenge` | API | Daily challenge quest |
 
@@ -182,10 +190,10 @@ OPENROUTER_API_KEY=...  # For AI Coach
 
 ## Next Steps (Priority Order)
 
-1. **Apply badges migration** - Run SQL in Supabase dashboard
-2. **Content Creation Track** - Create 25 new quests
-3. **Advanced AI Coach** - Context-aware, memory between sessions
-4. **Performance optimization** - Caching, lazy loading
+1. **Content Creation Track** - Create 25 new quests
+2. **Public profiles** - Shareable profile pages
+3. **Performance optimization** - Caching, lazy loading
+4. **TTS for audio learners** - Text-to-speech for theory content
 
 ---
 

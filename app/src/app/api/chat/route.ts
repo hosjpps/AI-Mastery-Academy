@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
 
-const SYSTEM_PROMPT = `You are an AI learning coach for AI Mastery Academy, a gamified platform teaching AI skills.
+const BASE_SYSTEM_PROMPT = `You are an AI learning coach for AI Mastery Academy, a gamified platform teaching AI skills.
 
 ## Your Role
 - Guide users through their learning journey
@@ -25,9 +25,151 @@ const SYSTEM_PROMPT = `You are an AI learning coach for AI Mastery Academy, a ga
 - Don't help with anything unethical or harmful
 - Redirect off-topic questions politely`
 
+type QuestContent = {
+  theory?: string
+  practice?: {
+    instructions: string
+    hints?: string[]
+    examples?: string[]
+  }
+}
+
+type QuestContext = {
+  id: string
+  title: string
+  description: string | null
+  content: QuestContent | null
+  difficulty: string | null
+  xp_reward: number | null
+  subtrack_title?: string
+  track_title?: string
+}
+
+type UserProfile = {
+  level: number
+  xp: number
+  learning_style: string | null
+  career_track: string | null
+  current_streak: number
+  display_name: string | null
+}
+
+type UserProgress = {
+  status: string
+  started_at: string | null
+  completed_at: string | null
+}
+
 type Message = {
   role: 'user' | 'assistant' | 'system'
   content: string
+}
+
+function buildSystemPrompt(
+  profile: UserProfile | null,
+  quest: QuestContext | null,
+  progress: UserProgress | null,
+  actionType?: string
+): string {
+  let prompt = BASE_SYSTEM_PROMPT
+
+  // Add learning style adaptations
+  if (profile?.learning_style) {
+    prompt += `\n\n## Teaching Style Adaptation
+Adapt your explanations for a ${profile.learning_style} learner:`
+
+    switch (profile.learning_style) {
+      case 'visual':
+        prompt += `
+- Use diagrams, comparisons, and visual metaphors
+- Structure information clearly with bullets and headers
+- Describe how things "look" or can be visualized`
+        break
+      case 'auditory':
+        prompt += `
+- Use storytelling and conversational explanations
+- Explain step-by-step as if talking through it
+- Use rhythm and memorable phrases`
+        break
+      case 'kinesthetic':
+        prompt += `
+- Focus on hands-on practice and experiments
+- Encourage "try this" and interactive exploration
+- Connect concepts to physical actions or real tasks`
+        break
+    }
+  }
+
+  // Add user context
+  if (profile) {
+    prompt += `\n\n## User Context
+- Name: ${profile.display_name || 'Learner'}
+- Level: ${profile.level || 1} (${profile.xp || 0} XP)
+- Learning style: ${profile.learning_style || 'not specified'}
+- Career goal: ${profile.career_track || 'not specified'}
+- Current streak: ${profile.current_streak || 0} days`
+  }
+
+  // Add quest context if available
+  if (quest) {
+    prompt += `\n\n## Current Quest
+The user is currently working on this quest:
+- **Quest:** ${quest.title}
+- **Description:** ${quest.description || 'No description'}
+- **Track:** ${quest.track_title || 'Unknown'} > ${quest.subtrack_title || 'Unknown'}
+- **Difficulty:** ${quest.difficulty || 'beginner'}
+- **XP Reward:** ${quest.xp_reward || 0} XP`
+
+    if (progress) {
+      prompt += `\n- **User's Status:** ${progress.status}${progress.started_at ? ` (started)` : ''}`
+    }
+
+    // Add quest content summary for context (truncated for token limits)
+    if (quest.content?.theory) {
+      const theorySummary = quest.content.theory.slice(0, 500)
+      prompt += `\n\n### Quest Theory (Summary)
+${theorySummary}${quest.content.theory.length > 500 ? '...' : ''}`
+    }
+
+    if (quest.content?.practice?.instructions) {
+      const practiceSummary = quest.content.practice.instructions.slice(0, 300)
+      prompt += `\n\n### Quest Practice Task
+${practiceSummary}${quest.content.practice.instructions.length > 300 ? '...' : ''}`
+    }
+  }
+
+  // Add action-specific guidance
+  if (actionType) {
+    prompt += `\n\n## User's Request Type: ${actionType.toUpperCase()}`
+
+    switch (actionType) {
+      case 'hint':
+        prompt += `
+The user is asking for a hint. Follow these rules:
+- Give a subtle hint that points them in the right direction
+- Ask a guiding question to help them think
+- Do NOT give the complete answer
+- Encourage them to try`
+        break
+      case 'explain':
+        prompt += `
+The user wants an explanation. Follow these rules:
+- Explain the concept clearly using their learning style
+- Use examples relevant to their career track
+- Keep it educational but concise`
+        break
+      case 'example':
+        prompt += `
+The user wants to see an example. Follow these rules:
+- Provide a practical, relevant example
+- Show both good and bad versions if applicable
+- Explain why the example works
+- Do NOT solve their practice task directly`
+        break
+    }
+  }
+
+  return prompt
 }
 
 export async function POST(request: NextRequest) {
@@ -42,7 +184,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { message, sessionId } = await request.json()
+    const { message, sessionId, questSlug, actionType } = await request.json()
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -54,19 +196,73 @@ export async function POST(request: NextRequest) {
     // Get user profile for context
     const { data: profile } = await supabase
       .from('profiles')
-      .select('level, learning_style, career_track, current_streak')
+      .select('level, xp, learning_style, career_track, current_streak, display_name')
       .eq('id', user.id)
-      .single()
+      .single() as { data: UserProfile | null }
+
+    // Get quest context if questSlug provided
+    let quest: QuestContext | null = null
+    let progress: UserProgress | null = null
+
+    if (questSlug) {
+      const { data: questData } = await supabase
+        .from('quests')
+        .select('id, title, description, content, difficulty, xp_reward, subtrack_id')
+        .eq('slug', questSlug)
+        .single()
+
+      if (questData) {
+        let subtrackTitle: string | undefined
+        let trackTitle: string | undefined
+
+        // Fetch subtrack and track info if available
+        if (questData.subtrack_id) {
+          const { data: subtrackData } = await supabase
+            .from('subtracks')
+            .select('title, track_id')
+            .eq('id', questData.subtrack_id)
+            .single()
+
+          if (subtrackData) {
+            subtrackTitle = subtrackData.title
+            if (subtrackData.track_id) {
+              const { data: trackData } = await supabase
+                .from('tracks')
+                .select('title')
+                .eq('id', subtrackData.track_id)
+                .single()
+              trackTitle = trackData?.title
+            }
+          }
+        }
+
+        quest = {
+          id: questData.id,
+          title: questData.title,
+          description: questData.description,
+          content: questData.content as QuestContent | null,
+          difficulty: questData.difficulty,
+          xp_reward: questData.xp_reward,
+          subtrack_title: subtrackTitle,
+          track_title: trackTitle
+        }
+
+        // Get user's progress on this quest
+        const { data: progressData } = await supabase
+          .from('user_progress')
+          .select('status, started_at, completed_at')
+          .eq('user_id', user.id)
+          .eq('quest_id', questData.id)
+          .maybeSingle()
+
+        if (progressData) {
+          progress = progressData as UserProgress
+        }
+      }
+    }
 
     // Build context-aware system prompt
-    let contextPrompt = SYSTEM_PROMPT
-    if (profile) {
-      contextPrompt += `\n\n## User Context
-- User level: ${profile.level || 1}
-- Learning style: ${profile.learning_style || 'not specified'}
-- Career track: ${profile.career_track || 'not specified'}
-- Current streak: ${profile.current_streak || 0} days`
-    }
+    const contextPrompt = buildSystemPrompt(profile, quest, progress, actionType)
 
     // Get chat history if session exists
     let messages: Message[] = [{ role: 'system', content: contextPrompt }]

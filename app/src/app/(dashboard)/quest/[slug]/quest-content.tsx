@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useQuestStore } from '@/stores/questStore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -117,6 +118,22 @@ export function QuestContent({ quest, subtrack, userProgress, nextQuest, prevQue
   const content = quest.content as QuestContentData | null
   const isCompleted = userProgress?.status === 'completed'
   const isInProgress = userProgress?.status === 'in_progress'
+
+  // Set quest context for AI Coach
+  const setCurrentQuest = useQuestStore((state) => state.setCurrentQuest)
+  const clearCurrentQuest = useQuestStore((state) => state.clearCurrentQuest)
+
+  useEffect(() => {
+    setCurrentQuest({
+      slug: quest.slug,
+      title: quest.title,
+      description: quest.description || undefined
+    })
+
+    return () => {
+      clearCurrentQuest()
+    }
+  }, [quest.slug, quest.title, quest.description, setCurrentQuest, clearCurrentQuest])
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {

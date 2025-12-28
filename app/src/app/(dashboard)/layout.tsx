@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar'
 import { DashboardHeader } from '@/components/layout/dashboard-header'
-import { AICoachWidget } from '@/components/chat/ai-coach-widget'
+import { AICoachProvider } from '@/components/chat/ai-coach-provider'
 
 export default async function DashboardLayout({
   children,
@@ -45,7 +45,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
-      <AICoachWidget />
+      <AICoachProvider />
     </div>
   )
 }
