@@ -9,7 +9,106 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### In Progress
-- Content Creation Track (25 quests)
+- TTS for audio learners
+
+---
+
+## [0.2.4] - 2025-12-28
+
+### Added
+- **Content Creation Track** (25 new quests!)
+  - **Text Generation Subtrack** (8 quests)
+    - Blog Writing with AI
+    - Social Media Content
+    - Email Marketing
+    - Copywriting Formulas (AIDA, PAS)
+    - Product Descriptions
+    - SEO Content Creation
+    - Video & Podcast Scripts
+    - Content Repurposing Master (Boss Quest)
+  - **Image Generation Subtrack** (8 quests)
+    - Image AI Fundamentals
+    - Visual Prompt Engineering
+    - Brand Visual Identity
+    - Social Media Graphics
+    - AI Product Photography
+    - Custom Illustrations
+    - Thumbnails & Covers
+    - Visual Campaign Master (Boss Quest)
+  - **Presentations & Design Subtrack** (9 quests)
+    - AI Presentation Basics
+    - Slide Design Principles
+    - Data Visualization
+    - Pitch Deck Creation
+    - Professional Reports
+    - Infographic Design
+    - Business Proposals
+    - Template Systems
+    - Complete Design System (Boss Quest)
+
+### Technical
+- 3 new subtracks in database
+- 25 quests with full theory and practice content
+- Total XP available: 3,925 XP in Content Creation Track
+- 3 Boss Quests with advanced challenges
+
+---
+
+## [0.2.3] - 2025-12-28
+
+### Added
+- **Performance Optimizations**
+  - Dynamic import for AI Coach widget (reduces initial bundle)
+  - Server-side caching for quest-map data (1 hour TTL)
+  - Loading skeletons for dashboard, profile, leaderboard, quest-map
+  - Skeleton UI component (`@/components/ui/skeleton`)
+
+- **UX Improvements**
+  - Debounced username availability check (500ms delay)
+  - Route prefetching for unlocked quests
+  - Faster page transitions with loading states
+
+### Changed
+- Quest-map refactored to Server Component with cached data
+- Username check no longer blocks UI during typing
+
+### Technical
+- New component: `Skeleton` for loading states
+- Quest-map split into server (page.tsx) and client (quest-map-client.tsx)
+- Uses `unstable_cache` for static content caching
+
+---
+
+## [0.2.2] - 2025-12-28
+
+### Added
+- **Public Profiles**
+  - Public profile page at `/u/[username]`
+  - Social meta tags for sharing (OG, Twitter)
+  - Share button with native share API / clipboard fallback
+  - Profile statistics visible to public (XP, level, streak, badges)
+  - CTA for visitors to join the platform
+
+- **Username Management**
+  - Username editing in settings (with validation)
+  - Real-time availability checking
+  - Username format validation (letters, numbers, -, _)
+  - Public profile link preview in settings
+
+- **Share Profile**
+  - Share button on private profile page
+  - Share button on public profile page
+  - Native share API support (mobile)
+  - Clipboard fallback for desktop
+
+### Changed
+- Updated RLS policies to allow public viewing of user badges
+- Profile settings now shows public profile link
+
+### Technical
+- New migration: `20251228_public_profiles.sql`
+- New route: `/u/[username]` (public profile)
+- 19 routes total (6 API, 13 pages)
 
 ---
 

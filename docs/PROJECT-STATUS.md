@@ -101,9 +101,20 @@
   - [x] Dynamic suggested prompts
   - [x] Chat session history
   - [x] Learning style-adapted responses
-- [ ] Content Creation Track (25 quests)
-- [ ] Public profiles
-- [ ] Performance optimization
+- [x] Public profiles
+  - [x] Public profile page /u/[username]
+  - [x] Username management in settings
+  - [x] Share profile button
+  - [x] Social meta tags (OG, Twitter)
+- [x] Performance optimization
+  - [x] Dynamic import for AI Coach (lazy load)
+  - [x] Server-side caching for quest data
+  - [x] Loading skeletons for all pages
+  - [x] Debounced username check
+- [x] Content Creation Track (25 quests)
+  - [x] Text Generation (8 quests)
+  - [x] Image Generation (8 quests)
+  - [x] Presentations & Design (9 quests)
 - [ ] TTS for audio learners
 
 ### Phase 3: Monetization
@@ -139,6 +150,7 @@
 | `/profile` | Dynamic | User profile |
 | `/settings` | Dynamic | User settings |
 | `/leaderboard` | Dynamic | User rankings |
+| `/u/[username]` | Dynamic | Public profile page |
 | `/api/chat` | API | AI Coach chat endpoint |
 | `/api/chat/sessions` | API | List user chat sessions |
 | `/api/chat/sessions/[id]` | API | Load specific chat session |
@@ -190,10 +202,10 @@ OPENROUTER_API_KEY=...  # For AI Coach
 
 ## Next Steps (Priority Order)
 
-1. **Content Creation Track** - Create 25 new quests
-2. **Public profiles** - Shareable profile pages
-3. **Performance optimization** - Caching, lazy loading
-4. **TTS for audio learners** - Text-to-speech for theory content
+1. **TTS for audio learners** - Text-to-speech for theory content
+2. **Stripe Integration** - Start Phase 3 monetization
+3. **PWA setup** - Offline support, push notifications
+4. **Automation Track** - 25 new quests for workflow automation
 
 ---
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Loader2, Save, User, Bell, Shield, Palette } from 'lucide-react'
+import { Loader2, Save, User, Bell, Shield, Palette, ExternalLink, Check, AlertCircle } from 'lucide-react'
 
 type Profile = {
   id: string
@@ -27,9 +27,15 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
 
   const [displayName, setDisplayName] = useState('')
+  const [username, setUsername] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+  const [checkingUsername, setCheckingUsername] = useState(false)
   const [dailyGoal, setDailyGoal] = useState(15)
   const [learningStyle, setLearningStyle] = useState('')
   const [careerTrack, setCareerTrack] = useState('')
+
+  // Debounce ref for username check
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     async function loadProfile() {
@@ -50,6 +56,7 @@ export default function SettingsPage() {
       if (data) {
         setProfile(data as Profile)
         setDisplayName(data.display_name || '')
+        setUsername(data.username || '')
         setDailyGoal(data.daily_goal_minutes || 15)
         setLearningStyle(data.learning_style || '')
         setCareerTrack(data.career_track || '')
@@ -61,26 +68,109 @@ export default function SettingsPage() {
     loadProfile()
   }, [router])
 
+  // Validate username format
+  const validateUsername = (value: string) => {
+    if (!value) return 'Username is required'
+    if (value.length < 3) return 'Username must be at least 3 characters'
+    if (value.length > 30) return 'Username must be less than 30 characters'
+    if (!/^[a-zA-Z0-9_-]+$/.test(value)) return 'Only letters, numbers, - and _ allowed'
+    return ''
+  }
+
+  // Check if username is available (debounced)
+  const checkUsernameAvailability = useCallback((value: string) => {
+    // Clear previous timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    if (!value || value === profile?.username) {
+      setUsernameError('')
+      setCheckingUsername(false)
+      return
+    }
+
+    const formatError = validateUsername(value)
+    if (formatError) {
+      setUsernameError(formatError)
+      setCheckingUsername(false)
+      return
+    }
+
+    // Show loading indicator
+    setCheckingUsername(true)
+
+    // Debounce the actual check by 500ms
+    debounceRef.current = setTimeout(async () => {
+      const supabase = createClient()
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', value.toLowerCase())
+        .single()
+
+      setCheckingUsername(false)
+
+      if (data) {
+        setUsernameError('Username is already taken')
+      } else {
+        setUsernameError('')
+      }
+    }, 500)
+  }, [profile?.username])
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [])
+
   const handleSave = async () => {
     if (!profile) return
+
+    // Validate username if changed
+    if (username !== profile.username) {
+      const formatError = validateUsername(username)
+      if (formatError || usernameError) {
+        toast.error('Please fix username errors')
+        return
+      }
+    }
 
     setSaving(true)
     const supabase = createClient()
 
+    const updateData: Record<string, string | number | null> = {
+      display_name: displayName || null,
+      daily_goal_minutes: dailyGoal,
+      learning_style: learningStyle || null,
+      career_track: careerTrack || null,
+    }
+
+    // Only update username if changed
+    if (username !== profile.username) {
+      updateData.username = username.toLowerCase()
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({
-        display_name: displayName || null,
-        daily_goal_minutes: dailyGoal,
-        learning_style: learningStyle || null,
-        career_track: careerTrack || null,
-      })
+      .update(updateData)
       .eq('id', profile.id)
 
     if (error) {
-      toast.error('Failed to save settings')
+      if (error.code === '23505') {
+        toast.error('Username is already taken')
+        setUsernameError('Username is already taken')
+      } else {
+        toast.error('Failed to save settings')
+      }
     } else {
       toast.success('Settings saved successfully')
+      setProfile({ ...profile, username: username.toLowerCase() })
       router.refresh()
     }
 
@@ -125,15 +215,67 @@ export default function SettingsPage() {
           <CardDescription>Update your personal information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Public Profile Link */}
+          <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-violet-300">Your public profile</p>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/u/{profile?.username}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
+                asChild
+              >
+                <a href={`/u/${profile?.username}`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  View
+                </a>
+              </Button>
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="username" className="text-zinc-300">Username</Label>
-            <Input
-              id="username"
-              value={profile?.username || ''}
-              disabled
-              className="bg-zinc-800 border-zinc-700 text-zinc-400"
-            />
-            <p className="text-xs text-zinc-500 mt-1">Username cannot be changed</p>
+            <div className="relative">
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+                  setUsername(value)
+                  setUsernameError(validateUsername(value))
+                }}
+                onBlur={() => checkUsernameAvailability(username)}
+                placeholder="your-username"
+                className={`bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 ${
+                  usernameError ? 'border-red-500' : ''
+                }`}
+              />
+              {checkingUsername && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+                </div>
+              )}
+              {!checkingUsername && username && !usernameError && username !== profile?.username && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Check className="w-4 h-4 text-green-400" />
+                </div>
+              )}
+            </div>
+            {usernameError ? (
+              <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {usernameError}
+              </p>
+            ) : (
+              <p className="text-xs text-zinc-500 mt-1">
+                This is your unique profile URL: /u/{username || 'username'}
+              </p>
+            )}
           </div>
 
           <div>
@@ -145,6 +287,9 @@ export default function SettingsPage() {
               placeholder="Enter your display name"
               className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
             />
+            <p className="text-xs text-zinc-500 mt-1">
+              This name will be shown on your profile and leaderboards
+            </p>
           </div>
         </CardContent>
       </Card>

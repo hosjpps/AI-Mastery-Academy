@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Flame, Target, Trophy, Zap, Calendar, Award, BookOpen } from 'lucide-react'
+import { Flame, Target, Trophy, Zap, Calendar, Award, BookOpen, Share2 } from 'lucide-react'
+import { ShareProfileButton } from './share-button'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -78,9 +79,12 @@ export default async function ProfilePage() {
             </Avatar>
 
             <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-2xl font-bold text-white">
-                {profile?.display_name || profile?.username}
-              </h1>
+              <div className="flex items-center justify-center sm:justify-start gap-3">
+                <h1 className="text-2xl font-bold text-white">
+                  {profile?.display_name || profile?.username}
+                </h1>
+                <ShareProfileButton username={profile?.username || ''} />
+              </div>
               <p className="text-zinc-400">@{profile?.username}</p>
 
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
