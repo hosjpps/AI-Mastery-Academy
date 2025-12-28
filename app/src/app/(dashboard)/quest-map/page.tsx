@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { unstable_cache } from 'next/cache'
 import { QuestMapClient } from './quest-map-client'
 
 type Track = {
@@ -44,38 +43,21 @@ type UserProgress = {
   xp_earned: number | null
 }
 
-// Cache static content for 1 hour (tracks, subtracks, quests rarely change)
-const getCachedQuestData = unstable_cache(
-  async () => {
-    const supabase = await createClient()
-
-    const [tracksRes, subtracksRes, questsRes] = await Promise.all([
-      supabase.from('tracks').select('*').order('order_index'),
-      supabase.from('subtracks').select('*').order('order_index'),
-      supabase.from('quests').select('*').eq('is_published', true).order('order_index'),
-    ])
-
-    return {
-      tracks: (tracksRes.data as Track[]) || [],
-      subtracks: (subtracksRes.data as Subtrack[]) || [],
-      quests: (questsRes.data as Quest[]) || [],
-    }
-  },
-  ['quest-map-data'],
-  {
-    revalidate: 3600, // Cache for 1 hour
-    tags: ['quest-data'],
-  }
-)
-
 export default async function QuestMapPage() {
   const supabase = await createClient()
 
-  // Get cached static data
-  const { tracks, subtracks, quests } = await getCachedQuestData()
+  // Fetch all data in parallel
+  const [tracksRes, subtracksRes, questsRes, userRes] = await Promise.all([
+    supabase.from('tracks').select('*').order('order_index'),
+    supabase.from('subtracks').select('*').order('order_index'),
+    supabase.from('quests').select('*').eq('is_published', true).order('order_index'),
+    supabase.auth.getUser(),
+  ])
 
-  // Get fresh user progress (this changes frequently)
-  const { data: { user } } = await supabase.auth.getUser()
+  const tracks = (tracksRes.data as Track[]) || []
+  const subtracks = (subtracksRes.data as Subtrack[]) || []
+  const quests = (questsRes.data as Quest[]) || []
+  const user = userRes.data.user
 
   let userProgress: UserProgress[] = []
   if (user) {
