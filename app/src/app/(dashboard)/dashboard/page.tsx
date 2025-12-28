@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ArrowRight, Flame, Target, Trophy, Zap } from 'lucide-react'
 import Link from 'next/link'
+import { DailyChallenge } from '@/components/gamification/daily-challenge'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -122,6 +123,9 @@ export default async function DashboardPage() {
           <Progress value={xpProgress} className="h-2" />
         </CardContent>
       </Card>
+
+      {/* Daily Challenge */}
+      <DailyChallenge />
 
       {/* Continue Learning */}
       <div>

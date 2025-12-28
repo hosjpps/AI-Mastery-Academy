@@ -11,9 +11,12 @@ import { Progress } from '@/components/ui/progress'
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
+  Award,
   BookOpen,
   CheckCircle2,
   Clock,
+  Flame,
   Lightbulb,
   Loader2,
   PlayCircle,
@@ -25,6 +28,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { completeQuestWithGamification } from '@/lib/gamification'
 
 type Quest = {
   id: string
@@ -100,6 +104,15 @@ export function QuestContent({ quest, subtrack, userProgress, nextQuest, prevQue
   const [feedback, setFeedback] = useState<{ score: number; feedback: string } | null>(
     userProgress?.ai_feedback as { score: number; feedback: string } | null
   )
+  const [gamificationResult, setGamificationResult] = useState<{
+    xpEarned: number
+    xpBonus: number
+    streakMultiplier: number
+    newStreak: number
+    leveledUp: boolean
+    newLevel: number
+    newBadges: string[]
+  } | null>(null)
 
   const content = quest.content as QuestContentData | null
   const isCompleted = userProgress?.status === 'completed'
@@ -190,70 +203,18 @@ export function QuestContent({ quest, subtrack, userProgress, nextQuest, prevQue
         }
       }
 
-      // Check if progress exists
-      const { data: existing } = await supabase
-        .from('user_progress')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('quest_id', quest.id)
-        .maybeSingle()
-
-      // Update progress
-      if (existing) {
-        await supabase
-          .from('user_progress')
-          .update({
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            submission_data: { text: submission },
-            submission_type: 'text',
-            ai_feedback: aiFeedback,
-            xp_earned: quest.xp_reward || 0,
-          })
-          .eq('id', existing.id)
-      } else {
-        await supabase.from('user_progress').insert({
-          user_id: userId,
-          quest_id: quest.id,
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          submission_data: { text: submission },
-          submission_type: 'text',
-          ai_feedback: aiFeedback,
-          xp_earned: quest.xp_reward || 0,
-        })
-      }
-
-      // Update user XP
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('xp, level')
-        .eq('id', userId)
-        .single()
-
-      if (profile) {
-        const newXp = (profile.xp || 0) + (quest.xp_reward || 0)
-        const xpThresholds = [0, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000]
-        let newLevel = profile.level || 1
-
-        for (let i = xpThresholds.length - 1; i >= 0; i--) {
-          if (newXp >= xpThresholds[i]) {
-            newLevel = i + 1
-            break
-          }
-        }
-
-        await supabase
-          .from('profiles')
-          .update({
-            xp: newXp,
-            level: newLevel,
-            last_activity_date: new Date().toISOString().split('T')[0]
-          })
-          .eq('id', userId)
-      }
+      // Use gamification system for quest completion
+      const result = await completeQuestWithGamification(
+        supabase,
+        userId,
+        quest.id,
+        quest.xp_reward || 0,
+        { type: 'text', data: { text: submission } },
+        aiFeedback
+      )
 
       setFeedback(aiFeedback)
+      setGamificationResult(result)
       router.refresh()
     } catch (error) {
       console.error('Error submitting quest:', error)
@@ -490,10 +451,71 @@ export function QuestContent({ quest, subtrack, userProgress, nextQuest, prevQue
               <Progress value={feedback.score} className="h-2" />
               <p className="text-zinc-300">{feedback.feedback}</p>
 
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
-                <Zap className="w-5 h-5 text-violet-400" />
-                <span className="text-violet-300">You earned <strong>+{quest.xp_reward || 0} XP</strong>!</span>
+              {/* XP Earned with Streak Bonus */}
+              <div className="p-4 rounded-lg bg-violet-500/10 border border-violet-500/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-violet-400" />
+                    <span className="text-violet-300">XP Earned</span>
+                  </div>
+                  <span className="text-xl font-bold text-violet-300">
+                    +{gamificationResult?.xpEarned || quest.xp_reward || 0}
+                  </span>
+                </div>
+
+                {/* Streak Bonus */}
+                {gamificationResult && gamificationResult.xpBonus > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-orange-400">
+                      <Flame className="w-4 h-4" />
+                      <span>{gamificationResult.newStreak}-day streak bonus ({Math.round((gamificationResult.streakMultiplier - 1) * 100)}%)</span>
+                    </div>
+                    <span className="text-orange-400">+{gamificationResult.xpBonus}</span>
+                  </div>
+                )}
+
+                {/* Current Streak */}
+                {gamificationResult && gamificationResult.newStreak > 1 && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-violet-500/20">
+                    <Flame className="w-5 h-5 text-orange-400" />
+                    <span className="text-zinc-300">
+                      {gamificationResult.newStreak} day streak!
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* Level Up */}
+              {gamificationResult?.leveledUp && (
+                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                      <ArrowUp className="w-6 h-6 text-yellow-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-yellow-400">Level Up!</h4>
+                      <p className="text-zinc-300">You reached <strong>Level {gamificationResult.newLevel}</strong></p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* New Badges */}
+              {gamificationResult?.newBadges && gamificationResult.newBadges.length > 0 && (
+                <div className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Award className="w-5 h-5 text-indigo-400" />
+                    <span className="font-semibold text-indigo-400">New Badge{gamificationResult.newBadges.length > 1 ? 's' : ''} Earned!</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {gamificationResult.newBadges.map((badge) => (
+                      <Badge key={badge} className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
+                        {badge.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

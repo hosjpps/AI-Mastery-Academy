@@ -2,7 +2,7 @@
 
 > Last updated: 2025-12-28
 
-## Current Phase: **Phase 1 MVP - Complete (100%)**
+## Current Phase: **Phase 2 - Gamification (In Progress)**
 
 ---
 
@@ -18,7 +18,7 @@
 | Dashboard | ✅ Complete | Stats, level progress, quests preview |
 | Quest System | ✅ Complete | Quest Map + Quest detail page |
 | AI Coach | ✅ Complete | Floating chat widget with OpenRouter integration |
-| Gamification | ✅ Complete | XP, Levels, Streaks implemented |
+| Gamification | ✅ Enhanced | XP, Levels, Streaks, Badges, Daily Challenge |
 | Profile | ✅ Complete | View stats, badges, account info |
 | Settings | ✅ Complete | Update preferences |
 | Leaderboard | ✅ Complete | Rankings with podium |
@@ -81,12 +81,21 @@
   - [x] User rank highlight
 - [x] Responsive design (mobile + desktop)
 
-### Phase 2: Content & Polish
+### Phase 2: Gamification & Polish ← CURRENT
+- [x] Streak system with XP multipliers
+  - [x] Auto-update on quest completion
+  - [x] Streak bonuses (3/7/14/30 days)
+  - [x] Lost streak notification
+- [x] Auto-badge system
+  - [x] Badge award logic
+  - [x] 15+ badges (streak, level, XP, quests)
+  - [x] Badge notification on earn
+- [x] Daily Challenge
+  - [x] API endpoint for daily quest
+  - [x] Dashboard card component
+  - [x] Bonus XP for daily completion
 - [ ] Content Creation Track (25 quests)
 - [ ] Advanced AI Coach
-- [ ] Badges system
-- [ ] Leaderboards
-- [ ] Daily challenges
 - [ ] Public profiles
 - [ ] Performance optimization
 - [ ] TTS for audio learners
@@ -126,6 +135,7 @@
 | `/leaderboard` | Dynamic | User rankings |
 | `/api/chat` | API | AI Coach chat endpoint |
 | `/api/evaluate` | API | Quest submission AI evaluation |
+| `/api/daily-challenge` | API | Daily challenge quest |
 
 ---
 
@@ -172,10 +182,10 @@ OPENROUTER_API_KEY=...  # For AI Coach
 
 ## Next Steps (Priority Order)
 
-1. **Google OAuth setup** - Complete external auth (needs Google Cloud Console)
-2. **Streak logic** - Implement daily streak update logic
-3. **Badge awarding** - Auto-award badges on achievements
-4. **Deploy to Vercel** - Production deployment
+1. **Apply badges migration** - Run SQL in Supabase dashboard
+2. **Content Creation Track** - Create 25 new quests
+3. **Advanced AI Coach** - Context-aware, memory between sessions
+4. **Performance optimization** - Caching, lazy loading
 
 ---
 

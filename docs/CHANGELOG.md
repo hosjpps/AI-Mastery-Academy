@@ -9,7 +9,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### In Progress
-- Google OAuth setup (needs Google Cloud Console)
+- Content Creation Track (25 quests)
+
+---
+
+## [0.2.0] - 2025-12-28
+
+### Added
+- **Gamification System**
+  - Full streak system with XP multipliers (25%/50%/75%/100% at 3/7/14/30 days)
+  - Auto-badge awarding on quest completion
+  - 15+ badges (streak, level, XP, quest milestones)
+  - Daily Challenge feature with bonus XP
+  - Badge notification on earn
+  - Level-up notification
+
+- **Daily Challenge**
+  - `/api/daily-challenge` endpoint
+  - Dashboard card component
+  - Date-seeded consistent daily quest selection
+  - +50 bonus XP for daily completion
+
+- **Landing Page Expansion**
+  - Stats bar section
+  - How It Works (4-step journey)
+  - AI Coach preview with chat mockup
+  - Quest preview cards (6 quests)
+  - Testimonials section (3 reviews)
+  - FAQ accordion (5 questions)
+  - Enhanced footer with links
+  - Navigation menu in header
+
+### Changed
+- Quest completion now uses centralized gamification system
+- XP calculation includes streak multipliers
+- Dashboard now shows Daily Challenge card
+
+### Technical
+- New `lib/gamification.ts` with all gamification utilities
+- New `components/gamification/daily-challenge.tsx`
+- 17 routes total (4 API, 13 pages)
 
 ---
 
